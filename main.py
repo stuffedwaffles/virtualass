@@ -23,8 +23,14 @@ import psutil
 from plyer import notification
 import spotipy
 import webbrowser
+import smtplib
 
-secrets = json.load('secrets.json')
+
+json_file_path = r"stuf\actual projects\virtual ass\repo\secrets.json"
+
+with open(json_file_path, 'r') as j:
+     secrets = json.loads(j.read())
+
 
 username = secrets["username"]
 clientID = secrets["clientID"]
@@ -43,10 +49,10 @@ spotifyObject = spotipy.Spotify(auth=token)
 user = spotifyObject.current_user()
 
 
-#email, notifications, meme?, covid stats, open other apps, call people
+#notifications, meme?, open other apps, call people
 
 reminders = {}
-comebacks = ["Stop pushing my buttons!", "You're such a wet sock.", "Calling you stupid would be an insult to all the stupid people.", "Sharp as a marble, that one.", "Maybe if you didn't talk like an idiot, I would be able to understand you.", "Well I don't like you either."]
+comebacks = ["Stop pushing my buttons!", "You're such a wet sock.", "Calling you stupid would be an insult to all the stupid people.", "Sharp as a marble, that one.", "Well I don't like you either.", "I hope you sleep on a twin sized mattress for the rest of your life."]
 greetings = ["Whats up?!", "How can I help you today?", "How you doin?", "Whatcha need?", "I am a computer!"]
 goodbyes = ["Computer, out!", "Signing off!", "To infinity and beyond!", "Thats all folks!", "Blast off!"]
 random_answers = ["I don't know what that means, but it sounds wonderful!", "Today is a great day to be a computer.", "I like trains.", "Give me a break, man!", "What the heck are you talking about?", "Are you talking to someone that isn't me?", "Well said.", "I only work in black. And very very dark gray"]
@@ -115,7 +121,7 @@ def digital_assistant(data):
  
     elif "help" in data:
         listening = True
-        respond("You can ask me: my name, how I am, the time, pickup lines, jokes, the weather, to google something, to remind you to do something, the battery, to start a timer, start a stopwatch, play a song, open a browser, or say stop listening to turn me off")
+        respond("You can ask me: my name, how I am, the time, pickup lines, jokes, the weather, to google something, to remind you to do something, the battery, to start a timer, start a stopwatch, play a song, open a browser, send an email, or say stop listening to turn me off")
 
     elif "name" in data:
         listening = True
@@ -124,14 +130,20 @@ def digital_assistant(data):
     elif "how are you" in data:
         listening = True
         respond("I'm doing good, how are you?")
-    
-    elif "good" in data or "great" in data:
-        listening = True
-        respond("Thats great!")
-    
-    elif "bad" in data:
-        listening = True
-        respond("Whats wrong?")
+        while True:
+            mood = listen()
+            if mood == "not audio":
+                continue
+            elif "stop" in mood:
+                return listening
+            else:
+                break
+        if "good" in mood or "great" in mood:
+            respond("Thats great!")
+        elif "bad" in mood:
+            respond("Sorry to hear that.")
+        else:
+            respond("Same!")
 
     elif "what time is it" in data:
         listening = True
@@ -186,11 +198,17 @@ def digital_assistant(data):
             temp = weather.current.temperature
             # get the weather forecast for a few days
             respond("How many days of weather would you like to hear? ")
-            try:
-                limit = int(listen())
-            except ValueError:
-                respond("Sorry, I didn't get that, so I'm going with 3.")
-                limit = 3
+            while True:
+                limit = listen()
+                if limit == "not audio":
+                    continue
+                elif "stop" in limit:
+                    return listening
+                elif type(limit) != int:
+                    continue
+                else:
+                    break
+            
             index = 0
             for forecast in weather.forecasts:
                 index +=1
@@ -256,11 +274,16 @@ def digital_assistant(data):
             
             output.append(item)
         respond("How many results would you like to hear? ")
-        try:
-            limit = int(listen())
-        except ValueError:
-            respond("Sorry, I didn't get that, so I'm going with 3.")
-            limit = 3
+        while True:
+            limit = listen()
+            if limit == "not audio":
+                continue
+            elif "stop" in limit:
+                return listening
+            elif type(limit) != int:
+                continue
+            else:
+                break
         index = 0
         for item in output:
             index +=1
@@ -270,13 +293,15 @@ def digital_assistant(data):
                 respond(key)
                 respond(value)
     
-    elif "remind me to" in data:
+    elif "remind me" in data:
         listening = True
-        data_l = data.split(" ")
-        data_l.remove("remind")
-        data_l.remove("me")
-        data_l.remove("to")
-        reminder = "".join(data_l)
+        respond("What do you need to be reminded? ")
+        while True:
+                reminder = listen()
+                if reminder == "not audio":
+                    continue
+                else:
+                    break
         time = datetime.now()
         reminders[reminder] = time.hour
         respond("Reminder added to the list! you will be reminded in an hour.")
@@ -301,18 +326,25 @@ def digital_assistant(data):
     elif "start timer" in data:
         import time
         listening = True
-        data_l = data.split(" ")
-        data_l.remove("timer")
-        data_l.remove("start")
-        unit = data_l[1]
-        times = int(data_l[0])
-        respond(f"Timer for {times} {unit} started.")
+        respond("How long do you want your timer? Please respond with the number and then unit of time. ")
+        while True:
+                time = listen()
+                if time == "not audio":
+                    continue
+                elif "stop" in time:
+                    return listening
+                else:
+                    break
+        time = time.split(" ")
+        unit = time[1]
+        time = time[0]
+        respond(f"Timer for {time} {unit} started.")
         if "min" in unit:
-            time.sleep(60*times)
+            time.sleep(60*time)
         elif "h" in unit:
-            time.sleep(60*60*times)
+            time.sleep(60*60*time)
         elif "sec" in unit:
-            time.sleep(times)
+            time.sleep(time)
         
         respond("Ring ring! Timer over.")
     
@@ -336,19 +368,24 @@ def digital_assistant(data):
                 break
             else:
                 continue
+
     elif "play" in data:
         listening = True
-        data_l = data.split(" ")
-        data_l.remove("play")
-        searchQuery = "".join(data_l)
-        searchResults = spotifyObject.search(searchQuery,1,0,"track")
+        respond("What song would you like to play? ")
+        while True:
+                query = listen()
+                if query == "not audio":
+                    continue
+                else:
+                    break
+        searchResults = spotifyObject.search(query,1,0,"track")
         # Get required data from JSON response.
         tracks_dict = searchResults['tracks']
         tracks_items = tracks_dict['items']
         song = tracks_items[0]['external_urls']['spotify']
         # Open the Song in Web Browser
         webbrowser.open(song)
-        respond(f'Song results for {searchQuery} have opened in your browser.')
+        respond(f'Song results for {query} have opened in your browser.')
 
 
     elif "covid" in data:
@@ -357,6 +394,64 @@ def digital_assistant(data):
         webbrowser.open("https://covid.cdc.gov/covid-data-tracker/#datatracker-home")
         respond("Covid data has been opened in your browser.")
 
+    elif "send email" in data:
+        listening = True
+        FROM = 'anikag006@gmail.com'
+
+        respond("Who would you like to email(please say the email address)? ")
+        while True:
+            email = listen()
+            if email == "not audio":
+                continue
+            else:
+                break
+        
+        email = email.split(" ")
+        for index in range(len(email)):
+            if email[index] == "at":
+                email[index] = "@"
+            elif email[index] == "dot":
+                email[index] = "."
+        email = "".join(email)
+        full_email = ["email"]
+        full_email[0] = email
+
+        TO = full_email # must be a list
+        respond("What would you like the subject to be? ")
+        while True:
+            sub = listen()
+            if sub == "not audio":
+                continue
+            else:
+                break
+        SUBJECT = sub
+
+        respond("What would you like the text to be? ")
+        while True:
+            txt = listen()
+            if txt == "not audio":
+                continue
+            elif "stop" in txt:
+                return listening
+            else:
+                break
+        TEXT = txt
+
+        # Prepare actual message
+
+        message = """\
+        From: %s
+        To: %s
+        Subject: %s
+
+        %s
+        """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+
+        # Send the mail
+
+        server = smtplib.SMTP('localhost')
+        server.sendmail(FROM, TO, message)
+        server.quit()
 
     else:   
         listening = True
