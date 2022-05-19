@@ -24,6 +24,9 @@ from plyer import notification
 import spotipy
 import webbrowser
 import smtplib
+import transformers
+nlp = transformers.pipeline("conversational", 
+                            model="microsoft/DialoGPT-medium")
 
 
 json_file_path = r"stuf\actual projects\virtual ass\repo\secrets.json"
@@ -55,8 +58,7 @@ reminders = {}
 comebacks = ["Stop pushing my buttons!", "You're such a wet sock.", "Calling you stupid would be an insult to all the stupid people.", "Sharp as a marble, that one.", "Well I don't like you either.", "I hope you sleep on a twin sized mattress for the rest of your life."]
 greetings = ["Whats up?!", "How can I help you today?", "How you doin?", "Whatcha need?", "I am a computer!"]
 goodbyes = ["Computer, out!", "Signing off!", "To infinity and beyond!", "Thats all folks!", "Blast off!"]
-random_answers = ["I don't know what that means, but it sounds wonderful!", "Today is a great day to be a computer.", "I like trains.", "Give me a break, man!", "What the heck are you talking about?", "Are you talking to someone that isn't me?", "Well said.", "I only work in black. And very very dark gray"]
-pickup_lines = ["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon"]
+pickup_lines = ["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high",]
 
 def listen():
     r = sr.Recognizer()
@@ -98,10 +100,6 @@ def digital_assistant(data):
         listening = True
         respond(random.choice(comebacks))
 
-
-    elif "hello" in data or "hi" in data or "hey" in data:
-        listening = True
-        respond("Hey man!")
     
     elif "browser" in data:
         listening = True
@@ -127,25 +125,7 @@ def digital_assistant(data):
         listening = True
         respond(f"My name is computer, and your's is {name}!")
 
-    elif "how are you" in data:
-        listening = True
-        respond("I'm doing good, how are you?")
-        while True:
-            mood = listen()
-            if mood == "not audio":
-                continue
-            elif "stop" in mood:
-                return listening
-            else:
-                break
-        if "good" in mood or "great" in mood:
-            respond("Thats great!")
-        elif "bad" in mood:
-            respond("Sorry to hear that.")
-        else:
-            respond("Same!")
-
-    elif "what time is it" in data:
+    elif "time" in data:
         listening = True
         respond(datetime.now())
     
@@ -183,10 +163,7 @@ def digital_assistant(data):
         listening = False
         respond(random.choice(goodbyes))
         return listening
-    
-    elif "thank" in data:
-        listening = True
-        respond("You're welcome!")
+
     
     elif "weather" in data:
         async def weather():
@@ -204,11 +181,14 @@ def digital_assistant(data):
                     continue
                 elif "stop" in limit:
                     return listening
-                elif type(limit) != int:
+                try:
+                    int(limit)
+                except ValueError:
                     continue
                 else:
                     break
-            
+                    
+
             index = 0
             for forecast in weather.forecasts:
                 index +=1
@@ -226,9 +206,6 @@ def digital_assistant(data):
         listening = True
 
 
-    elif "homework" in data:
-        listening = True
-        respond("Who needs homework?")
     
     elif "google" in data:
         listening = True
@@ -280,7 +257,9 @@ def digital_assistant(data):
                 continue
             elif "stop" in limit:
                 return listening
-            elif type(limit) != int:
+            try:
+                int(limit)
+            except ValueError:
                 continue
             else:
                 break
@@ -317,54 +296,50 @@ def digital_assistant(data):
 
     elif "not audio" in data:
         listening = True
-        num = random.randint(0,5)
-        if num == 3:
-            respond("Bless you!")
-        else:
-            pass
+        pass
     
     elif "start timer" in data:
         import time
         listening = True
         respond("How long do you want your timer? Please respond with the number and then unit of time. ")
         while True:
-                time = listen()
-                if time == "not audio":
+                time_to_wait = listen()
+                if time_to_wait == "not audio":
                     continue
-                elif "stop" in time:
+                elif "stop" in time_to_wait:
                     return listening
                 else:
                     break
-        time = time.split(" ")
-        unit = time[1]
-        time = time[0]
-        respond(f"Timer for {time} {unit} started.")
+        time_unit = time_to_wait.split(" ")
+        unit = time_unit[1]
+        time_to_wait = time_unit[0]
+        respond(f"Timer for {time_to_wait} {unit} started.")
         if "min" in unit:
-            time.sleep(60*time)
+            time.sleep(60*time_to_wait)
         elif "h" in unit:
-            time.sleep(60*60*time)
+            time.sleep(60*60*time_to_wait)
         elif "sec" in unit:
-            time.sleep(time)
+            time.sleep(time_to_wait)
         
         respond("Ring ring! Timer over.")
     
     elif "stopwatch" in data:
         listening = True
-        time = 0
+        time_waited = 0
         respond("Stopwatch started. say stop to stop.")
         while True:
-            if time > 3600:
+            if time_waited > 3600:
                 respond("Stopwatch has been running too long and has been stopped.")
                 break
             time.sleep(1)
-            time += 1
+            time_waited += 1
             data = listen()
             if data == "stop":
-                if time > 60:
-                    time = time/60
-                    respond(f"Stopwatch ran for {time} minutes")
+                if time_waited > 60:
+                    time_waited = time_waited/60
+                    respond(f"Stopwatch ran for {time_waited} minutes")
                 else:
-                    respond(f"Stopwatch ran for {time} seconds")
+                    respond(f"Stopwatch ran for {time_waited} seconds")
                 break
             else:
                 continue
@@ -455,13 +430,11 @@ def digital_assistant(data):
 
     else:   
         listening = True
-        # num = random.randint(0,5)
-        # if num == 3:
-        respond(random.choice(random_answers))
-
-        # else:
-        #     pass
-        
+        nlp(transformers.Conversation(data), pad_token_id=50256)
+        chat = nlp(transformers.Conversation(data), pad_token_id=50256)
+        res = str(chat)
+        res = res[res.find("bot >> ")+6:].strip()
+        respond(res)
 
     return listening
 
