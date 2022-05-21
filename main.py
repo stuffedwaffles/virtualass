@@ -27,6 +27,14 @@ import smtplib
 import transformers
 nlp = transformers.pipeline("conversational", 
                             model="microsoft/DialoGPT-medium")
+from flask import Flask, render_template, request
+from chatterbot import ChatBot
+from chatterbot.trainers import ChatterBotCorpusTrainer
+ 
+ 
+english_bot = ChatBot("computer", storage_adapter="chatterbot.storage.SQLStorageAdapter")
+trainer = ChatterBotCorpusTrainer(english_bot)
+trainer.train("chatterbot.corpus.english")
 
 
 json_file_path = r"stuf\actual projects\virtual ass\repo\secrets.json"
@@ -53,12 +61,38 @@ user = spotifyObject.current_user()
 
 
 #notifications, meme?, open other apps, call people
+responses = [
+    {"patterns": ["Hi", "How are you", "Is anyone there?", "Hello", "Good day", "computer", "whats up"],
+     "responses": ["Hello, thanks for visiting", "Good to see you again", "Hi there, how can I help?", "Whats up?!", "How can I help you today?", "How you doin?", "Whatcha need?", "I am computer!"],
+    },
+    {"tag":"bye",
+     "patterns": ["Bye", "See you later", "Goodbye", "go away", "stop listening"],
+     "responses": ["See you later, thanks for visiting", "Have a nice day", "Bye! Come back again soon.", "Computer, out!", "Signing off!", "To infinity and beyond!", "Thats all folks!"]
+    },
+    {
+     "patterns": ["Thanks", "Thank you", "That's helpful"],
+     "responses": ["Happy to help!", "Any time!", "My pleasure"]
+    },
+    {
+     "patterns":["shut up", "you suck", "you're stupid", "you're an idiot", "you're dumb"],
+     "responses":["Stop pushing my buttons!", "You're such a wet sock.", "Calling you stupid would be an insult to all the stupid people.", "Sharp as a marble, that one.", "Well I don't like you either.", "I hope you sleep on a twin sized mattress for the rest of your life."]
+    },
+    {
+    "patterns": ["tell me a pick up line", "pick up line"],
+    "responses":["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high"]
+    },
+    {
+    "patterns":["what can you do", "help", "what are your functions"],
+    "responses":["You can ask me: my name, how I am, the time, pickup lines, jokes, the weather, to google something, to remind you to do something, the battery, to start a timer, start a stopwatch, play a song, open a browser, send an email, or say stop listening to turn me off. You can also talk to me!"]
+    },
+    {
+    "patterns":["what is your name", "who are you", "what are you"],
+    "responses":["I am computer!", "my name is computer", "I'm a computer for you to talk to"]
+    }
+]
+
 
 reminders = {}
-comebacks = ["Stop pushing my buttons!", "You're such a wet sock.", "Calling you stupid would be an insult to all the stupid people.", "Sharp as a marble, that one.", "Well I don't like you either.", "I hope you sleep on a twin sized mattress for the rest of your life."]
-greetings = ["Whats up?!", "How can I help you today?", "How you doin?", "Whatcha need?", "I am a computer!"]
-goodbyes = ["Computer, out!", "Signing off!", "To infinity and beyond!", "Thats all folks!", "Blast off!"]
-pickup_lines = ["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high",]
 
 def listen():
     r = sr.Recognizer()
@@ -92,16 +126,16 @@ def respond(audioString):
 
 def digital_assistant(data):
 
-    if "computer" in data:
-        listening = True
-        respond(f"Hey {name}, {random.choice(greetings)}")
+    for dictionary in responses:
+        if data in dictionary["patterns"]:
+            respond(random.choice(dictionary["responses"]))
+        try:
+            thing = type(dictionary["tag"])
+            listening = False
+        except:
+            listening = True
     
-    elif "shut up" in data or "you suck" in data or "stupid" in data or "idiot" in data or "dumb" in data:
-        listening = True
-        respond(random.choice(comebacks))
-
-    
-    elif "browser" in data:
+    if "browser" in data:
         listening = True
         webbrowser.open("https://www.google.com/")
         respond("Browser opened!")
@@ -116,22 +150,10 @@ def digital_assistant(data):
             respond(f"{app} opened.")
         except:
             respond("Sorry, I couldn't find that app. Try another one.")
- 
-    elif "help" in data:
-        listening = True
-        respond("You can ask me: my name, how I am, the time, pickup lines, jokes, the weather, to google something, to remind you to do something, the battery, to start a timer, start a stopwatch, play a song, open a browser, send an email, or say stop listening to turn me off")
 
-    elif "name" in data:
+    elif "time" in data and "what" in data:
         listening = True
-        respond(f"My name is computer, and your's is {name}!")
-
-    elif "time" in data:
-        listening = True
-        respond(datetime.now())
-    
-    elif "pick up line" in data:
-        listening = True
-        respond(random.choice(pickup_lines))
+        respond(str(datetime.now()))
     
     elif "joke" in data:
         listening = True
@@ -158,11 +180,6 @@ def digital_assistant(data):
         for k,v in joke_answer.items():
             respond(k)
             respond(v)
-
-    elif "stop listening" in data:
-        listening = False
-        respond(random.choice(goodbyes))
-        return listening
 
     
     elif "weather" in data:
@@ -285,7 +302,7 @@ def digital_assistant(data):
         reminders[reminder] = time.hour
         respond("Reminder added to the list! you will be reminded in an hour.")
     
-    elif "battery" in data:
+    elif "battery" in data and "what" in data:
         listening = True
         battery = psutil.sensors_battery()
         percent = battery.percent
@@ -344,7 +361,7 @@ def digital_assistant(data):
             else:
                 continue
 
-    elif "play" in data:
+    elif "play song" in data:
         listening = True
         respond("What song would you like to play? ")
         while True:
@@ -363,7 +380,7 @@ def digital_assistant(data):
         respond(f'Song results for {query} have opened in your browser.')
 
 
-    elif "covid" in data:
+    elif "covid data" in data:
         # generic US covid data
         listening = True
         webbrowser.open("https://covid.cdc.gov/covid-data-tracker/#datatracker-home")
@@ -430,12 +447,13 @@ def digital_assistant(data):
 
     else:   
         listening = True
-        nlp(transformers.Conversation(data), pad_token_id=50256)
-        chat = nlp(transformers.Conversation(data), pad_token_id=50256)
-        res = str(chat)
-        res = res[res.find("bot >> ")+6:].strip()
-        respond(res)
-
+        # nlp(transformers.Conversation(data), pad_token_id=50256)
+        # chat = nlp(transformers.Conversation(data), pad_token_id=50256)
+        # res = str(chat)
+        # res = res[res.find("bot >> ")+6:].strip()
+        # respond(res)
+        respond(str(english_bot.get_response(data)))
+        
     return listening
 
 listening = True
