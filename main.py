@@ -79,7 +79,7 @@ responses = [
     },
     {
     "patterns": ["tell me a pick up line", "pick up line"],
-    "responses":["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high"]
+    "responses":["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high", "my name is computer but you can call me.... anytime", "are you a toaster cause id love to take a bath with you", "did it hurt when you fell from the vending machine? cause you look like a snack"]
     },
     {
     "patterns":["what can you do", "help", "what are your functions"],
@@ -309,11 +309,6 @@ def digital_assistant(data):
         plug = battery.power_plugged
         
         respond(f"Battery percentage is {percent}. Plugged in status: {plug}")
-
-
-    elif "not audio" in data:
-        listening = True
-        pass
     
     elif "start timer" in data:
         import time
@@ -445,14 +440,33 @@ def digital_assistant(data):
         server.sendmail(FROM, TO, message)
         server.quit()
 
-    else:   
+    elif "not audio" in data:
         listening = True
+        pass
+
+    else:   
         # nlp(transformers.Conversation(data), pad_token_id=50256)
         # chat = nlp(transformers.Conversation(data), pad_token_id=50256)
         # res = str(chat)
         # res = res[res.find("bot >> ")+6:].strip()
         # respond(res)
-        respond(str(english_bot.get_response(data)))
+
+        #for dict in the responses, if the data matches one then it responds and tries for a goodbye, otherwise it responds with ai thing
+        for dictionary in responses:
+            if data in dictionary["patterns"]:
+                respond(random.choice(dictionary["responses"]))
+
+                #checks for a tag to see if its goodbye
+                try:
+                    thing = type(dictionary["tag"])
+                    listening = False
+                #except no tag then just continue
+                except:
+                    listening = True
+            else:
+                listening = True
+                respond(str(english_bot.get_response(data)))
+                
         
     return listening
 
