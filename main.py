@@ -32,12 +32,18 @@ from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
  
  
+#THOUGHTS
+#connection reset error- what is it and why
+# off option where you say stop listening and when that happens then a new variable stopped = true and listening still = true but stopped also = true so we can have a while stopped = true then dont do anything except listen for computer/wakeup call which can be part of a function and then when that happens stopped = false
+
+
+
 english_bot = ChatBot("computer", storage_adapter="chatterbot.storage.SQLStorageAdapter")
 trainer = ChatterBotCorpusTrainer(english_bot)
 trainer.train("chatterbot.corpus.english")
 
 
-json_file_path = r"stuf\actual projects\virtual ass\repo\secrets.json"
+json_file_path = r"stuf\actual projects\asssecrets.json"
 
 with open(json_file_path, 'r') as j:
      secrets = json.loads(j.read())
@@ -79,7 +85,7 @@ responses = [
     },
     {
     "patterns": ["tell me a pick up line", "pick up line"],
-    "responses":["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…", "I'm a werewolf, and you're a full moon", "are you mr rushins root beer cause you make me high", "my name is computer but you can call me.... anytime", "are you a toaster cause id love to take a bath with you", "did it hurt when you fell from the vending machine? cause you look like a snack"]
+    "responses":["you better call life support baby cause ive fallen for you and i cant get up", "are you helium cause you look high", "are you an endothermic reaction", "are you an overheating nuclear power plant cause youre looking pretty thermal", "you must be match fumes cause you take my breath away", "are you missing an electron because youre looking positively attractive", "theres a lot of elements on the periodic table but all i see is U and I", "hey baby id sacrifice my life for you like a charred nut on a paper clip","are you depleted plutonium because youre radioactive","hey you know my favorite element is uranium because its U", "are you uranium because i cant find you on ebay", "you must be the square root of negative one cause you cant be real", "cant help but notice youre the perfect person to have some dino nuggies with", "i might give up chicken for tofu but id never give you up", "roses are red, the copper two+ ion is blue, id love to have some dino nuggies with you", "to bean or not to bean", "So, did i ever tell you about that time I went backpacking in western Europe? Years ago, when I was backpacking across Western Europe. I was just outside Barcelona hiking in the foothills of Mount Tibidabo. I was at the end of this path and I came to a clearing and there was a lake, very secluded. And there were tall trees all around. It was dead silent. Gorgeous. And across the lake I saw…a beautiful woman…bathing herself…but she was crying…I hesitated, watching, struck by her beauty. And also by how her presence; the delicate curve of her back, the dark sweep of her hair, the graceful length of her limbs, even her tears, added to the majesty of my surroundings. I felt my own tears burning behind my eyes, not in sympathy, but in appreciation of such a perfect moment. She spied me before I could compose myself. But she didn't cry out. Instead our eyes held and she smiled, enigmatically, fresh tears still spilling down her cheeks. I was frozen. I knew nothing about this woman, and yet, as we stood on opposite sides of a pool of water, thousands of miles from my own home and everyone I had ever known, I felt the most intense connection. Not just to her, but to the earth, the sky, the water between us. And also to the entirety of mankind. As if she symbolized thousands of years of the human condition. I wanted to go to her, to comfort her, to probe this feeling of belonging I had never encountered before. But I couldn't. Because I knew that if I spoke, if she spoke, that moment would be ruined. And I knew I would need the memory of that moment to carry me through the inevitable dark patches throughout my life. And so I watched her lower her hand, turn, and slowly walk to the shore opposite me. The rest of her perfect form was gradually revealed to me, and I held my breath as I watched her disappear behind a copse of trees near the water. I didn't follow her, in fact I turned around. I knew there was nothing else we could experience together that would be more perfect than that moment...and it still remains the most profound experience of my life", "You're a flashlight in a dark room in the loneliest blackout", "are you mr rushins root beer cause you make me high", "my name is computer but you can call me.... anytime", "are you a toaster cause id love to take a bath with you", "did it hurt when you fell from the vending machine? cause you look like a snack", "if you were a planet, you'd be venus cause you're the hottest one in the solar system", "youre hotter than the bottom of my computer"]
     },
     {
     "patterns":["what can you do", "help", "what are your functions"],
@@ -97,18 +103,22 @@ reminders = {}
 def listen():
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        print("I am listening...")
+        print("I am listening... (hit ctrl+c or say stop listening to turn me off)")
         audio = r.listen(source)
     data = ""
+    time.sleep(2)
     try:
         data = r.recognize_google(audio).lower()
         print("You said: " + data)
+    except ConnectionResetError:
+        print("Connection error.")
+        data = "not audio"
     except sr.UnknownValueError:
         print("Google Speech Recognition did not understand audio")
         data = "not audio"
-    except sr.RequestError as e:
-        print("Request Failed; {0}".format(e))
-        data = "not audio"
+    # except sr.RequestErrror as e:
+    #     print("Request Failed; {0}".format(e))
+    #     data = "not audio"
     return data
     
 
@@ -334,7 +344,6 @@ def digital_assistant(data):
             time.sleep(time_to_wait)
         
         respond("Ring ring! Timer over.")
-    
     elif "stopwatch" in data:
         listening = True
         time_waited = 0
@@ -474,8 +483,9 @@ listening = True
 start = datetime.now()
 while listening == True:
     data = listen()
+    print(f"data: {data}")
     listening = digital_assistant(data)
-    time.sleep(1)
+    time.sleep(3)
     if reminders != {}:
         for reminder, hour in reminders.items():
             if datetime.now().hour - hour >= 1:
