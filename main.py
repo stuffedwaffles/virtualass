@@ -42,8 +42,8 @@ english_bot = ChatBot("computer", storage_adapter="chatterbot.storage.SQLStorage
 trainer = ChatterBotCorpusTrainer(english_bot)
 trainer.train("chatterbot.corpus.english")
 
-
-json_file_path = r"stuf\actual projects\asssecrets.json"
+folder = os.path.dirname(os.path.abspath(__file__))
+json_file_path = os.path.join(folder, "asssecrets.json")
 
 with open(json_file_path, 'r') as j:
      secrets = json.loads(j.read())
